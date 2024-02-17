@@ -205,11 +205,11 @@ void NRF24L01_TX_Mode(void)
   NRF24L01_CE_LOW();	    
   NRF24L01_Write_Buf(NRF_WRITE_REG+TX_ADDR,(uint8_t*)TX_ADDRESS,TX_ADR_WIDTH);//?TX???? 
   NRF24L01_Write_Buf(NRF_WRITE_REG+RX_ADDR_P0,(uint8_t*)RX_ADDRESS,RX_ADR_WIDTH); //??TX????,??????ACK	  
-  NRF24L01_Write_Reg(NRF_WRITE_REG+EN_AA,0x00);     //????0?????    
-  NRF24L01_Write_Reg(NRF_WRITE_REG+EN_RXADDR,0x01); //????0?????  
+  NRF24L01_Write_Reg(NRF_WRITE_REG+EN_AA,0x00);     //关闭自动应答 
+  NRF24L01_Write_Reg(NRF_WRITE_REG+EN_RXADDR,0x01); //使能接收地址
   NRF24L01_Write_Reg(NRF_WRITE_REG+SETUP_RETR,0x1a);//??????????:4000us + 86us;????????:15?
-  NRF24L01_Write_Reg(NRF_WRITE_REG+RF_CH,45);       //??RF???40
-  NRF24L01_Write_Reg(NRF_WRITE_REG+RF_SETUP,0x0f);  //??TX????,0db??,2Mbps,???????   
+  NRF24L01_Write_Reg(NRF_WRITE_REG+RF_CH,45);       //信道45
+  NRF24L01_Write_Reg(NRF_WRITE_REG+RF_SETUP,0x0f);  //发送
   NRF24L01_Write_Reg(NRF_WRITE_REG+CONFIG,0x0e);    //???????????;PWR_UP,EN_CRC,16BIT_CRC,????,??????
   NRF24L01_CE_HIGH();//CE??,10us?????
   HAL_Delay(1);
