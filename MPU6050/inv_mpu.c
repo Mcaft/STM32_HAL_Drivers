@@ -2852,17 +2852,15 @@ lp_int_restore:
 }
 //////////////////////////////////////////////////////////////////////////////////
 
-//q30��ʽ,longתfloatʱ�ĳ���.
+//q30系数
 #define q30  1073741824.0f
 
-//�����Ƿ�������
+//方向矩阵
 static signed char gyro_orientation[9] = { 1, 0, 0,
                                            0, 1, 0,
                                            0, 0, 1
                                          };
-//MPU6050�Բ���
-//����ֵ:0,����
-//    ����,ʧ��
+
 uint8_t run_self_test(void)
 {
     int result;
@@ -2889,7 +2887,7 @@ uint8_t run_self_test(void)
         return 0;
     } else return result;
 }
-//�����Ƿ������
+
 unsigned short inv_orientation_matrix_to_scalar(
     const signed char *mtx)
 {
@@ -2910,7 +2908,7 @@ unsigned short inv_orientation_matrix_to_scalar(
 
     return scalar;
 }
-//����ת��
+
 unsigned short inv_row_2_scale(const signed char *row)
 {
     unsigned short b;
@@ -2931,47 +2929,54 @@ unsigned short inv_row_2_scale(const signed char *row)
         b = 7;      // error
     return b;
 }
-//�պ���,δ�õ�.
+
 void mget_ms(unsigned long *time)
 {
 
 }
-//mpu6050,dmp��ʼ��
-//����ֵ:0,����
-//    ����,ʧ��
+
+
+//dmp初始化
 uint8_t mpu_dmp_init(void)
 {
     uint8_t res=0;
-    MPU_IIC_Init(); 	//��ʼ��IIC����
-    if(mpu_init()==0)	//��ʼ��MPU6050
+//    MPU_IIC_Init(); 	//软件IIC初始化
+    if(mpu_init()==0)	//初始化MPU6050
     {
-        res=mpu_set_sensors(INV_XYZ_GYRO|INV_XYZ_ACCEL);//��������Ҫ�Ĵ�����
+        res=mpu_set_sensors(INV_XYZ_GYRO|INV_XYZ_ACCEL);//设置陀螺仪和加速度计
         if(res)return 1;
-        res=mpu_configure_fifo(INV_XYZ_GYRO|INV_XYZ_ACCEL);//����FIFO
+        res=mpu_configure_fifo(INV_XYZ_GYRO|INV_XYZ_ACCEL);//配置FIFO
         if(res)return 2;
-        res=mpu_set_sample_rate(200);	//���ò�����
+        res=mpu_set_sample_rate(200);	//采样率设为200hz
         if(res)return 3;
-        res=dmp_load_motion_driver_firmware();		//����dmp�̼�
+        res=dmp_load_motion_driver_firmware();		//加载dmp映像
         if(res)return 4;
-        res=dmp_set_orientation(inv_orientation_matrix_to_scalar(gyro_orientation));//���������Ƿ���
+        res=dmp_set_orientation(inv_orientation_matrix_to_scalar(gyro_orientation));//设置dmp解算方向
         if(res)return 5;
-        res=dmp_enable_feature(DMP_FEATURE_6X_LP_QUAT|DMP_FEATURE_SEND_RAW_GYRO);
+        res=dmp_enable_feature(DMP_FEATURE_6X_LP_QUAT|DMP_FEATURE_SEND_RAW_GYRO);//设置dmp功能，下方有注释
         if(res)return 6;
-        res=dmp_set_fifo_rate(DEFAULT_MPU_HZ);	//����DMP�������(��󲻳���200Hz)
+        res=dmp_set_fifo_rate(DEFAULT_MPU_HZ);	//设置fifo速率
         if(res)return 7;
-        res=run_self_test();		//�Լ�
+        res=run_self_test();		//自检
         if(res)return 8;
-        res=mpu_set_dmp_state(1);	//ʹ��DMP
+        res=mpu_set_dmp_state(1);	//开启dmp
         if(res)return 9;
     } else return 10;
     return 0;
 }
-//�õ�dmp�����������(ע��,��������Ҫ�Ƚ϶��ջ,�ֲ������е��)
-//pitch:������ ����:0.1��   ��Χ:-90.0�� <---> +90.0��
-//roll:�����  ����:0.1��   ��Χ:-180.0��<---> +180.0��
-//yaw:�����   ����:0.1��   ��Χ:-180.0��<---> +180.0��
-//����ֵ:0,����
-//    ����,ʧ��
+
+//  DMP_FEATURE_TAP             (0x001) //taping wayback
+//  DMP_FEATURE_ANDROID_ORIENT  (0x002) //Android兼容
+//  DMP_FEATURE_LP_QUAT         (0x004) //200HZ 加速度解算
+//  DMP_FEATURE_PEDOMETER       (0x008) //计步器功能
+//  DMP_FEATURE_6X_LP_QUAT      (0x010) //200hz 加速度陀螺仪融合解算
+//  DMP_FEATURE_GYRO_CAL        (0x020) 
+//  DMP_FEATURE_SEND_RAW_ACCEL  (0x040) //fifo中加入加速度原始数据
+//  DMP_FEATURE_SEND_RAW_GYRO   (0x080)//加入陀螺仪原始数据
+//  DMP_FEATURE_SEND_CAL_GYRO   (0x100)
+
+
+//dmp获取四元数结算得到欧拉角
 uint8_t mpu_dmp_get_data(float *pitch,float *roll,float *yaw)
 {
     float q0=1.0f,q1=0.0f,q2=0.0f,q3=0.0f;
